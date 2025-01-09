@@ -58,6 +58,7 @@ int main(void) {
             scanf("%f", &ha);
             printf("What is the height of the bottom area of the spherical segment (hb)\n");
             scanf("%f", &hb);
+            printf("entered data: R = %.2f ha = %.2f hb = %.2f.\n", r, ha, hb);
             checkflag = 1;
 
             /*Validate inputs*/
@@ -80,7 +81,6 @@ int main(void) {
         tsa = surfacearea(r, ha);
         bsa = surfacearea(r, hb);
         lsa = lateralsurfacearea(r, ha, hb);
-        printf("%.2f, %.2f, %.2f\n", tsa, bsa, lsa);
         total = tsa + bsa + lsa;
         volume = calcvolume(r, ha, hb);
         printf("Total Surface Area = %.2f, Volume %.2f.\n", total, volume);
