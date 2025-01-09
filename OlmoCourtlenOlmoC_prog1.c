@@ -58,7 +58,7 @@ int main(void) {
             scanf("%f", &ha);
             printf("What is the height of the bottom area of the spherical segment (hb)\n");
             scanf("%f", &hb);
-            printf("entered data: R = %.2f ha = %.2f hb = %.2f.\n", r, ha, hb);
+            printf("Entered data: R = %.2f, ha = %.2f, hb = %.2f.\n", r, ha, hb);
             checkflag = 1;
 
             /*Validate inputs*/
