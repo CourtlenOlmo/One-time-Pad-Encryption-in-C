@@ -39,7 +39,7 @@ int main(void) {
     float ha;
     float hb;
     int checkflag = 1;
-    float tsa, bsa, lsa, total, volume;
+    float tsa, bsa, lsa, total, volume, averagetotal, averagevolume;
 
     printf("How many spherical segments you want to evaluate [2-10]?\n");
     scanf("%d", &segments);
@@ -84,7 +84,10 @@ int main(void) {
         total = tsa + bsa + lsa;
         volume = calcvolume(r, ha, hb);
         printf("Total Surface Area = %.2f, Volume %.2f.\n", total, volume);
+        averagetotal += total;
+        averagevolume += volume;
     }
-
-    printf("Entered data: R = %.2f, ha = %.2f, hb = %.2f\n", r, ha, hb);
+    averagetotal = averagetotal / segments;
+    averagevolume = averagevolume / segments;
+    printf("Average Surface Area = %.2f Average Volume = %.2f\n", averagetotal, averagevolume);
 }
