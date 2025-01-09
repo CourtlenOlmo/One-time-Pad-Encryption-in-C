@@ -17,8 +17,8 @@ float lateralsurfacearea(float r,float a,float b){
 
 float calcvolume(float r, float ha, float hb){
     float height = ha - hb;
-    double a = sqrt((r*r)-(a*a));
-    double b = sqrt((r*r)-(b*b));
+    double a = sqrt((r*r)-(ha*ha));
+    double b = sqrt((r*r)-(hb*hb));
     float volume = (1.0/6.0) * pi * height * ((3 * (a*a))+ (3 * (b * b)) + (height * height));
     return volume;
 }
