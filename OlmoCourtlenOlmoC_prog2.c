@@ -157,7 +157,7 @@ void showMoviesByLanguage(struct movies* list, char* language){
 int main ( int argc, char **argv ){
     int selection = 0;
     int yearChoice;
-    char* language;
+    char language[21];
 
     if (argc < 2)
     {
@@ -190,7 +190,7 @@ int main ( int argc, char **argv ){
         }
         else if (selection == 3){
             printf("Enter the language for which you want to see movies: \n");
-            scanf("%s", language);
+            scanf("%20s", language);
             showMoviesByLanguage(head, language);
         }
         else if (selection == 4){
