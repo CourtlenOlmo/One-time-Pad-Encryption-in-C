@@ -185,7 +185,7 @@ int findFileByName(){
     while((entry = readdir(currDir)) != NULL){
         stat(entry->d_name, &dirStat);
 
-        //if the name of the file matches the user input, if a matching file is not found, write an error message
+        //if the name of the file matches the user input - process file, if a matching file is not found, write an error message
         if(strcmp(entry->d_name, fileName) == 0){
             printf("Now processing the chosen file named %s\n", fileName);
             processMovieFile(fileName);
