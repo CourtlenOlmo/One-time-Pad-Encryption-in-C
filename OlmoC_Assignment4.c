@@ -10,6 +10,8 @@
 #define INPUT_LENGTH 2048
 #define MAX_ARGS 512
 
+int last_status = 0; // global variable to store the last status of a process
+
 struct command_line {
     char *argv[MAX_ARGS + 1];
     int argc;
@@ -108,7 +110,7 @@ void spawn_child(struct command_line *cmd){
             // Parent process
             if (!cmd->is_bg) {
                 int child_status;
-                waitpid(spawnpid, &child_status, 0);
+                waitpid(spawnpid, &last_status, 0);
             } else {
                 printf("Background pid is %d\n", spawnpid);
             }
@@ -154,7 +156,7 @@ int main() {
                 printf("Exit value %d\n", WEXITSTATUS(0));
                 fflush(stdout);
             } else {
-                // Execute other commands
+                // Execute other commands and spawn child processes
                 spawn_child(curr_command);
             }
         }
