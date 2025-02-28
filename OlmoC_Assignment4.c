@@ -34,8 +34,13 @@ void handle_SIGCHLD(int signo) {
     pid_t child_pid;
     char buffer[256];
     while ((child_pid = waitpid(-1, &child_status, WNOHANG)) > 0) {
-        int len = snprintf(buffer, sizeof(buffer), "Background pid %d is done: exit value %d\n", child_pid, WEXITSTATUS(child_status));
-        write(STDOUT_FILENO, buffer, len);
+        if (WIFEXITED(child_status)) {
+            int len = snprintf(buffer, sizeof(buffer), "Background pid %d is done: exit value %d\n", child_pid, WEXITSTATUS(child_status));
+            write(STDOUT_FILENO, buffer, len);
+        } else if (WIFSIGNALED(child_status)) {
+            int len = snprintf(buffer, sizeof(buffer), "Background pid %d is done: terminated by signal %d\n", child_pid, WTERMSIG(child_status));
+            write(STDOUT_FILENO, buffer, len);
+        }
     }
 }  
 
