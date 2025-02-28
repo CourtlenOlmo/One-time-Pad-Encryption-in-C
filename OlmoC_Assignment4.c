@@ -75,6 +75,46 @@ void free_command(struct command_line *command) {
     free(command);
 }
 
+void spawn_child(struct command_line *cmd){
+    pid_t spawnpid = fork();
+    switch (spawnpid) {
+        case -1:
+            perror("fork() failed");
+            break;
+        case 0:
+            // Child process
+            if (cmd->input_file) {
+                FILE *input = fopen(cmd->input_file, "r");
+                if (!input) {
+                    perror("fopen() failed");
+                    exit(EXIT_FAILURE);
+                }
+                dup2(fileno(input), STDIN_FILENO);
+                fclose(input);
+            }
+            if (cmd->output_file) {
+                FILE *output = fopen(cmd->output_file, "w");
+                if (!output) {
+                    perror("fopen() failed");
+                    exit(EXIT_FAILURE);
+                }
+                dup2(fileno(output), STDOUT_FILENO);
+                fclose(output);
+            }
+            execvp(cmd->argv[0], cmd->argv);
+            perror("execvp() failed");
+            exit(EXIT_FAILURE);
+        default:
+            // Parent process
+            if (!cmd->is_bg) {
+                int child_status;
+                waitpid(spawnpid, &child_status, 0);
+            } else {
+                printf("Background pid is %d\n", spawnpid);
+            }
+    }
+}
+
 int main() {
 
     // set up for the sigint handler
@@ -99,6 +139,7 @@ int main() {
             if (!strcmp(curr_command->argv[0], "exit")) {
                 return EXIT_SUCCESS;
             } else if (curr_command->argv[0][0] == '#') {
+                //if the first value is a #, ignore that line
                 continue;
             } else if (!strcmp(curr_command->argv[0], "cd")) {
                 // Change to the home directory if no arguments were sent
@@ -113,44 +154,8 @@ int main() {
                 printf("Exit value %d\n", WEXITSTATUS(0));
                 fflush(stdout);
             } else {
-                // all other commands use the exec function
-                pid_t spawnpid = fork();
-                switch (spawnpid) {
-                    case -1:
-                        perror("fork() failed");
-                        break;
-                    case 0:
-                        // Child process
-                        if (curr_command->input_file) {
-                            FILE *input = fopen(curr_command->input_file, "r");
-                            if (!input) {
-                                perror("fopen() failed");
-                                exit(EXIT_FAILURE);
-                            }
-                            dup2(fileno(input), STDIN_FILENO);
-                            fclose(input);
-                        }
-                        if (curr_command->output_file) {
-                            FILE *output = fopen(curr_command->output_file, "w");
-                            if (!output) {
-                                perror("fopen() failed");
-                                exit(EXIT_FAILURE);
-                            }
-                            dup2(fileno(output), STDOUT_FILENO);
-                            fclose(output);
-                        }
-                        execvp(curr_command->argv[0], curr_command->argv);
-                        perror("execvp() failed");
-                        exit(EXIT_FAILURE);
-                    default:
-                        // Parent process
-                        if (!curr_command->is_bg) {
-                            int child_status;
-                            waitpid(spawnpid, &child_status, 0);
-                        } else {
-                            printf("Background pid is %d\n", spawnpid);
-                        }
-                }
+                // Execute other commands
+                spawn_child(curr_command);
             }
         }
         
