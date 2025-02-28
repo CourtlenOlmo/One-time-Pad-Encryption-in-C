@@ -21,7 +21,7 @@ struct command_line {
 };
 
 struct command_line *curr_command;
-
+/*
 void handle_SIGINT(int signo){
     if(curr_command->is_bg == false){
         printf("\n");
@@ -37,7 +37,7 @@ void handle_SIGCHLD(int signo) {
         fflush(stdout);
     }
 }  
-
+*/
 //This code was adapted from CS344's Assignment 4 provided code
 struct command_line *parse_input() {
     char input[INPUT_LENGTH];
@@ -119,7 +119,7 @@ void spawn_child(struct command_line *cmd){
 
 int main() {
 
-    // set up for the sigint handler
+    /* set up for the sigint handler
     struct sigaction SIGINT_action = {0};
     SIGINT_action.sa_handler = handle_SIGINT;
     sigfillset(&SIGINT_action.sa_mask);
@@ -132,6 +132,7 @@ int main() {
     sigfillset(&SIGCHLD_action.sa_mask);
     SIGCHLD_action.sa_flags = SA_RESTART;
     sigaction(SIGCHLD, &SIGCHLD_action, NULL);
+    */
 
     while(true) {
         curr_command = parse_input();
@@ -153,7 +154,7 @@ int main() {
                 }
             } else if (!strcmp(curr_command->argv[0], "status")) {
                 // Print the exit status or the terminating signal of the last foreground process
-                printf("Exit value %d\n", WEXITSTATUS(0));
+                printf("Exit value %d\n", WEXITSTATUS(last_status));
                 fflush(stdout);
             } else {
                 // Execute other commands and spawn child processes
