@@ -28,7 +28,7 @@ void handle_SIGINT(int signo){
         fflush(stdout);
     }
   }
-
+*/
 void handle_SIGCHLD(int signo) {
     int child_status;
     pid_t child_pid;
@@ -37,7 +37,7 @@ void handle_SIGCHLD(int signo) {
         fflush(stdout);
     }
 }  
-*/
+
 //This code was adapted from CS344's Assignment 4 provided code
 struct command_line *parse_input() {
     char input[INPUT_LENGTH];
@@ -113,6 +113,7 @@ void spawn_child(struct command_line *cmd){
                 waitpid(spawnpid, &last_status, 0);
             } else {
                 printf("Background pid is %d\n", spawnpid);
+                fflush(stdout);
             }
     }
 }
@@ -125,14 +126,14 @@ int main() {
     sigfillset(&SIGINT_action.sa_mask);
     SIGINT_action.sa_flags = 0;
     sigaction(SIGINT, &SIGINT_action, NULL);
-
+    */
     // set up for sigchld handler
     struct sigaction SIGCHLD_action = {0};
     SIGCHLD_action.sa_handler = handle_SIGCHLD;
     sigfillset(&SIGCHLD_action.sa_mask);
     SIGCHLD_action.sa_flags = SA_RESTART;
     sigaction(SIGCHLD, &SIGCHLD_action, NULL);
-    */
+
 
     while(true) {
         curr_command = parse_input();
