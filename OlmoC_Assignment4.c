@@ -32,9 +32,10 @@ void handle_SIGINT(int signo){
 void handle_SIGCHLD(int signo) {
     int child_status;
     pid_t child_pid;
+    char buffer[256];
     while ((child_pid = waitpid(-1, &child_status, WNOHANG)) > 0) {
-        printf("Background pid %d is done: terminated by signal %d\n", child_pid, WEXITSTATUS(child_status));
-        fflush(stdout);
+        int len = snprintf(buffer, sizeof(buffer), "Background pid %d is done: exit value %d\n", child_pid, WEXITSTATUS(child_status));
+        write(STDOUT_FILENO, buffer, len);
     }
 }  
 
@@ -107,7 +108,6 @@ void spawn_child(struct command_line *cmd){
             perror("execvp() failed");
             exit(EXIT_FAILURE);
         default:
-            // Parent process
             if (!cmd->is_bg) {
                 int child_status;
                 waitpid(spawnpid, &last_status, 0);
