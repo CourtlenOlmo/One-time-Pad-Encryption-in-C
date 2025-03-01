@@ -21,14 +21,14 @@ struct command_line {
 };
 
 struct command_line *curr_command;
-/*
+
 void handle_SIGINT(int signo){
-    if(curr_command->is_bg == false){
-        printf("\n");
-        fflush(stdout);
-    }
-  }
-*/
+    char* message = "terminated by signal 2\n";
+    write(STDOUT_FILENO, message, 24);
+    fflush(stdout);
+    exit(2);
+}
+
 void handle_SIGCHLD(int signo) {
     int child_status;
     pid_t child_pid;
@@ -37,9 +37,11 @@ void handle_SIGCHLD(int signo) {
         if (WIFEXITED(child_status)) {
             int len = snprintf(buffer, sizeof(buffer), "Background pid %d is done: exit value %d\n", child_pid, WEXITSTATUS(child_status));
             write(STDOUT_FILENO, buffer, len);
+            fflush(stdout);
         } else if (WIFSIGNALED(child_status)) {
             int len = snprintf(buffer, sizeof(buffer), "Background pid %d is done: terminated by signal %d\n", child_pid, WTERMSIG(child_status));
             write(STDOUT_FILENO, buffer, len);
+            fflush(stdout);
         }
     }
 }  
@@ -86,11 +88,21 @@ void free_command(struct command_line *command) {
 void spawn_child(struct command_line *cmd){
     pid_t spawnpid = fork();
     switch (spawnpid) {
+
         case -1:
             perror("fork() failed");
             break;
+
         case 0:
-            // Child process
+            signal(SIGINT, SIG_DFL);
+
+            // set up for the sigint handler
+            struct sigaction SIGINT_action = {0};
+            SIGINT_action.sa_handler = handle_SIGINT;
+            sigfillset(&SIGINT_action.sa_mask);
+            SIGINT_action.sa_flags = 0;
+            sigaction(SIGINT, &SIGINT_action, NULL);
+            
             if (cmd->input_file) {
                 FILE *input = fopen(cmd->input_file, "r");
                 if (!input) {
@@ -100,6 +112,7 @@ void spawn_child(struct command_line *cmd){
                 dup2(fileno(input), STDIN_FILENO);
                 fclose(input);
             }
+
             if (cmd->output_file) {
                 FILE *output = fopen(cmd->output_file, "w");
                 if (!output) {
@@ -112,6 +125,7 @@ void spawn_child(struct command_line *cmd){
             execvp(cmd->argv[0], cmd->argv);
             perror("execvp() failed");
             exit(EXIT_FAILURE);
+
         default:
             if (!cmd->is_bg) {
                 int child_status;
@@ -124,14 +138,7 @@ void spawn_child(struct command_line *cmd){
 }
 
 int main() {
-
-    /* set up for the sigint handler
-    struct sigaction SIGINT_action = {0};
-    SIGINT_action.sa_handler = handle_SIGINT;
-    sigfillset(&SIGINT_action.sa_mask);
-    SIGINT_action.sa_flags = 0;
-    sigaction(SIGINT, &SIGINT_action, NULL);
-    */
+    
     // set up for sigchld handler
     struct sigaction SIGCHLD_action = {0};
     SIGCHLD_action.sa_handler = handle_SIGCHLD;
@@ -139,6 +146,7 @@ int main() {
     SIGCHLD_action.sa_flags = SA_RESTART;
     sigaction(SIGCHLD, &SIGCHLD_action, NULL);
 
+    signal(SIGINT, SIG_IGN);
 
     while(true) {
         curr_command = parse_input();
@@ -147,10 +155,14 @@ int main() {
         if (curr_command->argc > 0 && curr_command->argv[0] != NULL) {
             if (!strcmp(curr_command->argv[0], "exit")) {
                 return EXIT_SUCCESS;
-            } else if (curr_command->argv[0][0] == '#') {
+            } 
+            
+            else if (curr_command->argv[0][0] == '#') {
                 //if the first value is a #, ignore that line
                 continue;
-            } else if (!strcmp(curr_command->argv[0], "cd")) {
+            } 
+            
+            else if (!strcmp(curr_command->argv[0], "cd")) {
                 // Change to the home directory if no arguments were sent
                 if (curr_command->argc == 1) {
                     chdir(getenv("HOME"));
@@ -158,11 +170,15 @@ int main() {
                     // Change to the specified directory
                     chdir(curr_command->argv[1]);
                 }
-            } else if (!strcmp(curr_command->argv[0], "status")) {
+            } 
+            
+            else if (!strcmp(curr_command->argv[0], "status")) {
                 // Print the exit status or the terminating signal of the last foreground process
                 printf("Exit value %d\n", WEXITSTATUS(last_status));
                 fflush(stdout);
-            } else {
+            } 
+            
+            else {
                 // Execute other commands and spawn child processes
                 spawn_child(curr_command);
             }
