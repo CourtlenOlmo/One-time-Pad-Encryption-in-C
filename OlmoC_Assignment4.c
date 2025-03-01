@@ -11,6 +11,7 @@
 #define MAX_ARGS 512
 
 int last_status = 0; // global variable to store the last status of a process
+bool allow_bg = true; // if true, background processes are allowed
 
 struct command_line {
     char *argv[MAX_ARGS + 1];
@@ -27,6 +28,20 @@ void handle_SIGINT(int signo){
     write(STDOUT_FILENO, message, 24);
     fflush(stdout);
     exit(2);
+}
+
+void handle_SIGTSTP(int signo){
+    if (allow_bg){
+        char* message = "Entering foreground-only mode (& is now ignored)\n";
+        write(STDOUT_FILENO, message, 50);
+        fflush(stdout);
+        allow_bg = false;
+    } else {
+        char* message = "Exiting foreground-only mode\n";
+        write(STDOUT_FILENO, message, 30);
+        fflush(stdout);
+        allow_bg = true;
+    }
 }
 
 void handle_SIGCHLD(int signo) {
@@ -127,7 +142,7 @@ void spawn_child(struct command_line *cmd){
             exit(EXIT_FAILURE);
 
         default:
-            if (!cmd->is_bg) {
+            if (!cmd->is_bg || !allow_bg) {
                 int child_status;
                 waitpid(spawnpid, &last_status, 0);
             } else {
@@ -145,6 +160,14 @@ int main() {
     sigfillset(&SIGCHLD_action.sa_mask);
     SIGCHLD_action.sa_flags = SA_RESTART;
     sigaction(SIGCHLD, &SIGCHLD_action, NULL);
+
+    //set up for sigtstp handler
+    struct sigaction SIGTSTP_action = {0};
+    SIGTSTP_action.sa_handler = handle_SIGTSTP;
+    sigfillset(&SIGTSTP_action.sa_mask);
+    SIGTSTP_action.sa_flags = 0;
+    sigaction(SIGTSTP, &SIGTSTP_action, NULL);
+
 
     signal(SIGINT, SIG_IGN);
 
