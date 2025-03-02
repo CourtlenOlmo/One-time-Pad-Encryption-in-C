@@ -10,9 +10,6 @@
 #define INPUT_LENGTH 2048
 #define MAX_ARGS 512
 
-int last_status = 0; // global variable to store the last status of a process
-bool allow_bg = true; // if true, background processes are allowed
-
 struct command_line {
     char *argv[MAX_ARGS + 1];
     int argc;
@@ -21,9 +18,16 @@ struct command_line {
     bool is_bg;
 };
 
+int last_status = 0; // global variable to store the last status of a process
+bool allow_bg = true; // if true, background processes are allowed
 struct command_line *curr_command;
 
+
 void handle_SIGINT(int signo){
+    /*-----------------------------------------------------------
+    This function is called when the user presses ctrl+c.
+    It writes a message to the console and terminates the child process
+    -----------------------------------------------------------*/
     char* message = "terminated by signal 2\n";
     write(STDOUT_FILENO, message, 24);
     fflush(stdout);
@@ -31,6 +35,14 @@ void handle_SIGINT(int signo){
 }
 
 void handle_SIGTSTP(int signo){
+    /*-----------------------------------------------------------
+    This function is called when the user presses ctrl+z.
+    Functions as a toggle to allow the user to run commands in the 
+    background or not.
+
+    This works by switching the variable "allow_bg" to true or false
+    depending on its current state.
+    -----------------------------------------------------------*/
     if (allow_bg){
         char* message = "Entering foreground-only mode (& is now ignored)\n";
         write(STDOUT_FILENO, message, 50);
@@ -45,6 +57,12 @@ void handle_SIGTSTP(int signo){
 }
 
 void handle_SIGCHLD(int signo) {
+    /*-----------------------------------------------------------
+    This function is called when a child process terminates.
+    
+    It writes a message to the console with the exit value or the
+    signal that terminated the process.
+    -----------------------------------------------------------*/
     int child_status;
     pid_t child_pid;
     char buffer[256];
@@ -61,8 +79,15 @@ void handle_SIGCHLD(int signo) {
     }
 }  
 
-//This code was adapted from CS344's Assignment 4 provided code
+
 struct command_line *parse_input() {
+    /*---------------------------------------------------------
+    This code was adapted from CS344's Assignment 4 provided skeleton code
+
+    This function parses the input from the user and returns a struct
+    with the parsed information.
+    -----------------------------------------------------------*/
+    
     char input[INPUT_LENGTH];
     struct command_line *curr_command = (struct command_line *) calloc(1, sizeof(struct command_line));
 
@@ -88,6 +113,12 @@ struct command_line *parse_input() {
 }
 
 void free_command(struct command_line *command) {
+     /*---------------------------------------------------------
+    This function is used to prevent memory leaks.
+
+    It frees the memory allocated for the command struct after 
+    each command is run.
+     -----------------------------------------------------------*/
     for (int i = 0; i < command->argc; i++) {
         free(command->argv[i]);
     }
@@ -101,6 +132,11 @@ void free_command(struct command_line *command) {
 }
 
 void spawn_child(struct command_line *cmd){
+    /*---------------------------------------------------------
+    This function spawns a child process to execute the command
+    given by the user. It also sets up the input and output files
+    if they were provided by the user.
+     -----------------------------------------------------------*/
     pid_t spawnpid = fork();
     switch (spawnpid) {
 
@@ -168,7 +204,7 @@ int main() {
     SIGTSTP_action.sa_flags = 0;
     sigaction(SIGTSTP, &SIGTSTP_action, NULL);
 
-
+    //During execution of main, ignore SIGINT
     signal(SIGINT, SIG_IGN);
 
     while(true) {
