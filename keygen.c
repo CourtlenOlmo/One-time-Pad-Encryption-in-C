@@ -15,5 +15,9 @@ int main(int argc, char** argv){
         key[i] = keyChars[rand() % 27];
     }
     
+    key[keyLength] = '\0';
+
     fprintf(stdout, "%s\n", key);
+
+    return 0;
 }
