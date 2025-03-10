@@ -32,6 +32,7 @@ int main(int argc, char *argv[]){
   char buffer[256];
   struct sockaddr_in serverAddress, clientAddress;
   socklen_t sizeOfClientInfo = sizeof(clientAddress);
+  char* enc_message;
 
   // Check usage & args
   if (argc < 2) { 
@@ -79,7 +80,15 @@ int main(int argc, char *argv[]){
     if (charsRead < 0){
       error("ERROR reading from socket");
     }
-    printf("SERVER: I received this from the client: \"%s\"\n", buffer);
+
+    //seperate the message into variables named fileName and Key
+    char* fileName = strtok(buffer, "|");
+    char* key = strtok(NULL, "|");
+    printf("fileName: %s\n", fileName);
+    printf("key: %s\n", key);
+
+    //encrypt fileName using key and OTP
+    
 
     // Send a Success message back to the client
     charsRead = send(connectionSocket, 
