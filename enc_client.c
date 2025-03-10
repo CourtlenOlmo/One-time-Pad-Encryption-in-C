@@ -48,6 +48,8 @@ int main(int argc, char *argv[]) {
   int socketFD, charsWritten, charsRead;
   struct sockaddr_in serverAddress;
   char buffer[256];
+  char* fileName = argv[1];
+  char* key = argv[2];
   // Check usage & args
   if (argc < 3) { 
     fprintf(stderr,"USAGE: %s hostname port\n", argv[0]); 
@@ -78,7 +80,7 @@ int main(int argc, char *argv[]) {
 
   // Send message to server
   // Write to the server
-  charsWritten = send(socketFD, buffer, strlen(buffer), 0); 
+  charsWritten = send(socketFD, fileName, strlen(fileName), 0); 
   if (charsWritten < 0){
     error("CLIENT: ERROR writing to socket");
   }
