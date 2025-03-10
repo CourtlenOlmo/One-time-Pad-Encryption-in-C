@@ -8,7 +8,7 @@ int main(int argc, char** argv){
     }
 
     int keyLength = atoi(argv[1]);
-    char key[keyLength];
+    char key[80000];
     char keyChars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
 
     for (int i = 0; i < keyLength; i++){
