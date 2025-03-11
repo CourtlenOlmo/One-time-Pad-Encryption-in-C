@@ -90,7 +90,6 @@ int main(int argc, char *argv[]) {
 
   // Clear out the buffer array
   memset(buffer, '\0', sizeof(buffer));
-  //put fileName + "/n" + key into buffer
   sprintf(buffer, "%s|%s", fileName, key);
 
   // Send message to server

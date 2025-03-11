@@ -122,7 +122,8 @@ int main(int argc, char *argv[]){
       int enc_index = (keyIndex + fileIndex) % 27;
       enc_message[enc_message_index++] = alphabet[enc_index];
     }
-    
+    fclose(keyFile);
+    fclose(file);
 
     // Send a Success message back to the client
     charsRead = send(connectionSocket, 
