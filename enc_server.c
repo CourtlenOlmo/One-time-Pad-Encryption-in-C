@@ -29,7 +29,8 @@ void setupAddressStruct(struct sockaddr_in* address,
 
 int main(int argc, char *argv[]){
   int connectionSocket, charsRead;
-  char buffer[256];
+  char fileBuffer[80000];
+  char keyBuffer[80000];
   struct sockaddr_in serverAddress, clientAddress;
   socklen_t sizeOfClientInfo = sizeof(clientAddress);
   char* enc_message;
@@ -74,20 +75,28 @@ int main(int argc, char *argv[]){
                           ntohs(clientAddress.sin_port));
 
     // Get the message from the client and display it
-    memset(buffer, '\0', 256);
-    // Read the client's message from the socket
-    charsRead = recv(connectionSocket, buffer, 255, 0); 
+    memset(fileBuffer, '\0', 80000);
+    // Receive the plaintext message from the socket
+    charsRead = recv(connectionSocket, fileBuffer, 80000, 0); 
     if (charsRead < 0){
       error("ERROR reading from socket");
     }
 
-    //seperate the message into variables named fileName and Key
-    char* fileName = strtok(buffer, "|");
-    char* key = strtok(NULL, "|");
-
-    // Open the key and filename files
-    FILE* keyFile = fopen(key, "r");
-    FILE* file = fopen(fileName, "r");
+    //seperate the key and file from the buffer and put them into their own buffers
+    int i = 0;
+    while (fileBuffer[i] != '|'){
+      keyBuffer[i] = fileBuffer[i];
+      i++;
+    }
+    keyBuffer[i] = '\0';
+    i++;
+    int j = 0;
+    while (fileBuffer[i] != '\0'){
+      fileBuffer[j] = fileBuffer[i];
+      i++;
+      j++;
+    }
+    fileBuffer[j] = '\0';
 
     // Assign a numerical value to the letters of the alphabet
     char* alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
@@ -97,23 +106,16 @@ int main(int argc, char *argv[]){
     }
 
     // Initialize enc_message to be the same size as the plaintext message
-    fseek(file, 0, SEEK_END);
-    long fileSize = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    enc_message = malloc((fileSize + 1) * sizeof(char)); // +1 for the null terminator
-    if (enc_message == NULL) {
-      error("ERROR allocating memory");
-    }
-    memset(enc_message, '\0', fileSize + 1);
+    enc_message = malloc(strlen(fileBuffer) * sizeof(char));
 
     //iterate through the key and file, adding the value of each letter to the enc_message
     int enc_message_index = 0;
     while (1){
-      char keyChar = fgetc(keyFile);
-      char fileChar = fgetc(file);
-      if (keyChar == EOF || fileChar == EOF){
+      if (fileBuffer[enc_message_index] == '\0'){
         break;
       }
+      char keyChar = keyBuffer[enc_message_index];
+      char fileChar = fileBuffer[enc_message_index];
       int keyIndex = 0;
       int fileIndex = 0;
       for (int i = 0; i < 27; i++){
@@ -129,10 +131,6 @@ int main(int argc, char *argv[]){
     }
 
     enc_message[enc_message_index] = '\0';
-
-    fclose(keyFile);
-    fclose(file);
-
     
     // Send the encoded message back to the client
     charsRead = send(connectionSocket, 

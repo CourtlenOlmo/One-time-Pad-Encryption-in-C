@@ -63,7 +63,6 @@ void comp_length( char* key, char* fileName){
 int main(int argc, char *argv[]) {
   int socketFD, charsWritten, charsRead;
   struct sockaddr_in serverAddress;
-  char buffer[256];
   char* fileName = argv[1];
   char* key = argv[2];
   // Check usage & args
@@ -88,12 +87,64 @@ int main(int argc, char *argv[]) {
 
   comp_length(key, fileName);
 
-  // Clear out the buffer array
-  memset(buffer, '\0', sizeof(buffer));
-  sprintf(buffer, "%s|%s", fileName, key);
+  // Open the key and filename files
+  FILE* keyFile = fopen(key, "r");
+  FILE* file = fopen(fileName, "r");
 
-  // Send message to server
-  // Write to the server
+  //strip the newline from the end of file
+  fseek(file, -1, SEEK_END);
+  if (fgetc(file) == '\n'){
+    fseek(file, -1, SEEK_END);
+  }
+
+  //strip the /n from the end of key
+  fseek(keyFile, -1, SEEK_END);
+  if (fgetc(keyFile) == '\n'){
+    fseek(keyFile, -1, SEEK_END);
+  }  
+
+  //put how long keyFile is into a variable
+  fseek(keyFile, 0, SEEK_END);
+  long keySize = ftell(keyFile);
+  fseek(keyFile, 0, SEEK_SET);
+  //put how long file is into a variable
+  fseek(file, 0, SEEK_END);
+  long fileSize = ftell(file);
+  fseek(file, 0, SEEK_SET);
+
+  //initalize buffer to be the size of the key and file
+  char buffer[keySize + fileSize + 2];
+  memset(buffer, '\0', sizeof(buffer));
+
+  //copy the contents of plaintext and key into buffer seperated by a "|"
+  int i = 0;
+  while (1){
+    if (feof(file)){
+      break;
+    }
+    buffer[i++] = fgetc(file);
+  }
+  buffer[i++] = '|';
+  while (1){
+    if (feof(keyFile)){
+      break;
+    }
+    buffer[i++] = fgetc(keyFile);
+  }
+  buffer[i] = '\0';
+
+  // Send message to server while ensuring all data is sent
+  int totalCharsWritten = 0;
+  while (totalCharsWritten < strlen(buffer)){
+    charsWritten = send(socketFD, buffer, strlen(buffer), 0);
+    if (charsWritten < 0){
+      error("CLIENT: ERROR writing to socket");
+    }
+    totalCharsWritten += charsWritten;
+
+  }
+
+  /*
   charsWritten = send(socketFD, buffer, strlen(buffer), 0); 
   if (charsWritten < 0){
     error("CLIENT: ERROR writing to socket");
@@ -101,7 +152,7 @@ int main(int argc, char *argv[]) {
   if (charsWritten < strlen(buffer)){
     printf("CLIENT: WARNING: Not all data written to socket!\n");
   }
-
+  */
   // Get return message from server
   // Clear out the buffer again for reuse
   memset(buffer, '\0', sizeof(buffer));
