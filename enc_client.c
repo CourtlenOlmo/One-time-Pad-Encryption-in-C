@@ -111,7 +111,8 @@ int main(int argc, char *argv[]) {
   if (charsRead < 0){
     error("CLIENT: ERROR reading from socket");
   }
-  printf("CLIENT: I received this from the server: \"%s\"\n", buffer);
+  //output buffer to stdout
+  printf("%s\n", buffer);
 
   // Close the socket
   close(socketFD); 
