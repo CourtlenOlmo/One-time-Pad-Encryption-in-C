@@ -84,8 +84,6 @@ int main(int argc, char *argv[]){
     //seperate the message into variables named fileName and Key
     char* fileName = strtok(buffer, "|");
     char* key = strtok(NULL, "|");
-    printf("fileName: %s\n", fileName);
-    printf("key: %s\n", key);
 
     // Open the key and filename files
     FILE* keyFile = fopen(key, "r");
@@ -98,11 +96,15 @@ int main(int argc, char *argv[]){
       alpha[i] = i;
     }
 
-    //initialize inc_message to be the same size as the file
+    // Initialize enc_message to be the same size as the plaintext message
     fseek(file, 0, SEEK_END);
     long fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
-    enc_message = malloc(fileSize * sizeof(char));
+    enc_message = malloc((fileSize + 1) * sizeof(char)); // +1 for the null terminator
+    if (enc_message == NULL) {
+      error("ERROR allocating memory");
+    }
+    memset(enc_message, '\0', fileSize + 1);
 
     //iterate through the key and file, adding the value of each letter to the enc_message
     int enc_message_index = 0;
