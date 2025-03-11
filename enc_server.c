@@ -87,12 +87,46 @@ int main(int argc, char *argv[]){
     printf("fileName: %s\n", fileName);
     printf("key: %s\n", key);
 
-    //encrypt fileName using key and OTP
+    //open the key and filename files
+    char* enc_message;
+    enc_message = (char*)malloc(256 * sizeof(char));
+    memset(enc_message, '\0', 256);
+
+    FILE* keyFile = fopen(key, "r");
+    FILE* file = fopen(fileName, "r");
+    //assign a numerical value to the letters of the alphabet
+    char* alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
+    int alpha[27];
+    for (int i = 0; i < 27; i++){
+      alpha[i] = i;
+    }
+
+    //iterate through the key and file, adding the value of each letter to the enc_message
+    int enc_message_index = 0;
+    while (1){
+      char keyChar = fgetc(keyFile);
+      char fileChar = fgetc(file);
+      if (keyChar == EOF || fileChar == EOF){
+        break;
+      }
+      int keyIndex = 0;
+      int fileIndex = 0;
+      for (int i = 0; i < 27; i++){
+        if (keyChar == alphabet[i]){
+          keyIndex = alpha[i];
+        }
+        if (fileChar == alphabet[i]){
+          fileIndex = alpha[i];
+        }
+      }
+      int enc_index = (keyIndex + fileIndex) % 27;
+      enc_message[enc_message_index++] = alphabet[enc_index];
+    }
     
 
     // Send a Success message back to the client
     charsRead = send(connectionSocket, 
-                    "I am the server, and I got your message", 39, 0); 
+                    enc_message, strlen(enc_message), 0); 
     if (charsRead < 0){
       error("ERROR writing to socket");
     }

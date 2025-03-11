@@ -44,6 +44,22 @@ void setupAddressStruct(struct sockaddr_in* address,
         hostInfo->h_length);
 }
 
+void comp_length( char* key, char* fileName){
+    //compare the key against fileName, if it is shorter, print to stderr and exit program
+    FILE *keyFile = fopen(key, "r");
+    FILE *file = fopen(fileName, "r");
+    fseek(keyFile, 0, SEEK_END);
+    long keySize = ftell(keyFile);
+    fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    if (keySize < fileSize){
+      fprintf(stderr, "Error: key '%s' is too short\n", key);
+      exit(1);
+    }
+    fclose(keyFile);
+    fclose(file);
+}
+
 int main(int argc, char *argv[]) {
   int socketFD, charsWritten, charsRead;
   struct sockaddr_in serverAddress;
@@ -70,11 +86,7 @@ int main(int argc, char *argv[]) {
     error("CLIENT: ERROR connecting");
   }
 
-  //check if key is longer than fileName, print to stderr and exit program
-  if (strlen(key) < strlen(fileName)){
-    fprintf(stderr, "Key '%s' is too short\n", key);
-    exit(1);
-  }
+  comp_length(key, fileName);
 
   // Clear out the buffer array
   memset(buffer, '\0', sizeof(buffer));
