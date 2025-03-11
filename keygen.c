@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 int main(int argc, char** argv){
     if (argc != 2) {
@@ -10,6 +11,8 @@ int main(int argc, char** argv){
     int keyLength = atoi(argv[1]);
     char key[80000];
     char keyChars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
+
+    srand(time(NULL));
 
     for (int i = 0; i < keyLength; i++){
         key[i] = keyChars[rand() % 27];
