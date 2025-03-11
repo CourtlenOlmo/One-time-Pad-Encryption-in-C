@@ -90,9 +90,6 @@ int main(int argc, char *argv[]){
     // Open the key and filename files
     FILE* keyFile = fopen(key, "r");
     FILE* file = fopen(fileName, "r");
-    if (keyFile == NULL || file == NULL) {
-      error("ERROR opening files");
-    }
 
     // Assign a numerical value to the letters of the alphabet
     char* alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
