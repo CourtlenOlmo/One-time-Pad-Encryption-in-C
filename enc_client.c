@@ -97,11 +97,11 @@ int main(int argc, char *argv[]) {
     fseek(file, -1, SEEK_END);
   }
 
-  //strip the /n from the end of key
+  //strip the newline from the end of key
   fseek(keyFile, -1, SEEK_END);
   if (fgetc(keyFile) == '\n'){
     fseek(keyFile, -1, SEEK_END);
-  }  
+  }
 
   //put how long keyFile is into a variable
   fseek(keyFile, 0, SEEK_END);

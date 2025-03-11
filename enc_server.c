@@ -29,6 +29,7 @@ void setupAddressStruct(struct sockaddr_in* address,
 
 int main(int argc, char *argv[]){
   int connectionSocket, charsRead;
+  char mainBuffer[80000];
   char fileBuffer[80000];
   char keyBuffer[80000];
   struct sockaddr_in serverAddress, clientAddress;
@@ -75,28 +76,18 @@ int main(int argc, char *argv[]){
                           ntohs(clientAddress.sin_port));
 
     // Get the message from the client and display it
-    memset(fileBuffer, '\0', 80000);
+    memset(mainBuffer, '\0', 80000);
     // Receive the plaintext message from the socket
-    charsRead = recv(connectionSocket, fileBuffer, 80000, 0); 
+    charsRead = recv(connectionSocket, mainBuffer, 80000, 0); 
     if (charsRead < 0){
       error("ERROR reading from socket");
     }
 
-    //seperate the key and file from the buffer and put them into their own buffers
-    int i = 0;
-    while (fileBuffer[i] != '|'){
-      keyBuffer[i] = fileBuffer[i];
-      i++;
-    }
-    keyBuffer[i] = '\0';
-    i++;
-    int j = 0;
-    while (fileBuffer[i] != '\0'){
-      fileBuffer[j] = fileBuffer[i];
-      i++;
-      j++;
-    }
-    fileBuffer[j] = '\0';
+    //seperate the key and file from the buffer and put them into their own buffers using strtok
+    char* token = strtok(mainBuffer, "|");
+    strcpy(fileBuffer, token);
+    token = strtok(NULL, "|");
+    strcpy(keyBuffer, token);
 
     // Assign a numerical value to the letters of the alphabet
     char* alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
