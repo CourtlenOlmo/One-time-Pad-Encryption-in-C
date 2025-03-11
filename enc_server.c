@@ -87,19 +87,25 @@ int main(int argc, char *argv[]){
     printf("fileName: %s\n", fileName);
     printf("key: %s\n", key);
 
-    //open the key and filename files
-    char* enc_message;
-    enc_message = (char*)malloc(256 * sizeof(char));
-    memset(enc_message, '\0', 256);
-
+    // Open the key and filename files
     FILE* keyFile = fopen(key, "r");
     FILE* file = fopen(fileName, "r");
-    //assign a numerical value to the letters of the alphabet
+    if (keyFile == NULL || file == NULL) {
+      error("ERROR opening files");
+    }
+
+    // Assign a numerical value to the letters of the alphabet
     char* alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
     int alpha[27];
     for (int i = 0; i < 27; i++){
       alpha[i] = i;
     }
+
+    //initialize inc_message to be the same size as the file
+    fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    enc_message = malloc(fileSize * sizeof(char));
 
     //iterate through the key and file, adding the value of each letter to the enc_message
     int enc_message_index = 0;
@@ -122,18 +128,26 @@ int main(int argc, char *argv[]){
       int enc_index = (keyIndex + fileIndex) % 27;
       enc_message[enc_message_index++] = alphabet[enc_index];
     }
+
+    enc_message[enc_message_index] = '\0';
+
     fclose(keyFile);
     fclose(file);
 
-    // Send a Success message back to the client
+    
+    // Send the encoded message back to the client
     charsRead = send(connectionSocket, 
                     enc_message, strlen(enc_message), 0); 
     if (charsRead < 0){
       error("ERROR writing to socket");
     }
+
+    free(enc_message);
+
     // Close the connection socket for this client
     close(connectionSocket); 
   }
+
   // Close the listening socket
   close(listenSocket); 
   return 0;
