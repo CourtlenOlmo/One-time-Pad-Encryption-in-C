@@ -82,8 +82,8 @@ int main(int argc, char *argv[]){
     if (charsRead < 0){
       error("ERROR reading from socket");
     }
-
-    //seperate the key and file from the buffer and put them into their own buffers using strtok
+    
+    //seperate the key and file from the buffer and put them into their own buffers
     char* token = strtok(mainBuffer, "|");
     strcpy(fileBuffer, token);
     token = strtok(NULL, "|");
@@ -97,7 +97,11 @@ int main(int argc, char *argv[]){
     }
 
     // Initialize enc_message to be the same size as the plaintext message
-    enc_message = malloc(strlen(fileBuffer) * sizeof(char));
+    enc_message = malloc((strlen(fileBuffer) + 1) * sizeof(char));
+    memset(enc_message, '\0', strlen(fileBuffer) + 1);
+
+      printf("key: %s\n", keyBuffer);
+      printf("file: %s\n", fileBuffer);
 
     //iterate through the key and file, adding the value of each letter to the enc_message
     int enc_message_index = 0;

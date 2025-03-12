@@ -91,18 +91,6 @@ int main(int argc, char *argv[]) {
   FILE* keyFile = fopen(key, "r");
   FILE* file = fopen(fileName, "r");
 
-  //strip the newline from the end of file
-  fseek(file, -1, SEEK_END);
-  if (fgetc(file) == '\n'){
-    fseek(file, -1, SEEK_END);
-  }
-
-  //strip the newline from the end of key
-  fseek(keyFile, -1, SEEK_END);
-  if (fgetc(keyFile) == '\n'){
-    fseek(keyFile, -1, SEEK_END);
-  }
-
   //put how long keyFile is into a variable
   fseek(keyFile, 0, SEEK_END);
   long keySize = ftell(keyFile);
@@ -115,24 +103,34 @@ int main(int argc, char *argv[]) {
   //initalize buffer to be the size of the key and file
   char buffer[keySize + fileSize + 2];
   memset(buffer, '\0', sizeof(buffer));
+  // Read the contents of the file into a temporary buffer
+  char tempBuffer[fileSize + 1];
+  fread(tempBuffer, sizeof(char), fileSize, file);
+  tempBuffer[fileSize] = '\0';
 
-  //copy the contents of plaintext and key into buffer seperated by a "|"
+  // Copy the contents of the file into the buffer, removing newline characters
   int i = 0;
-  while (1){
-    if (feof(file)){
-      break;
+  for (int j = 0; j < fileSize; j++) {
+    if (tempBuffer[j] != '\n') {
+      buffer[i++] = tempBuffer[j];
     }
-    buffer[i++] = fgetc(file);
   }
   buffer[i++] = '|';
-  while (1){
-    if (feof(keyFile)){
-      break;
+
+  // Read the contents of the key file into a temporary buffer
+  char tempKeyBuffer[keySize + 1];
+  fread(tempKeyBuffer, sizeof(char), keySize, keyFile);
+  tempKeyBuffer[keySize] = '\0';
+
+  // Copy the contents of the keyfile into the buffer, removing newline characters
+  for (int j = 0; j < keySize; j++) {
+    if (tempKeyBuffer[j] != '\n') {
+      buffer[i++] = tempKeyBuffer[j];
     }
-    buffer[i++] = fgetc(keyFile);
   }
   buffer[i] = '\0';
 
+  
   // Send message to server while ensuring all data is sent
   int totalCharsWritten = 0;
   while (totalCharsWritten < strlen(buffer)){
