@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
   char keyBuffer[80000];
   struct sockaddr_in serverAddress, clientAddress;
   socklen_t sizeOfClientInfo = sizeof(clientAddress);
-  char* enc_message;
+  char* dec_message;
 
   // Check usage & args
   if (argc < 2) { 
@@ -75,6 +75,13 @@ int main(int argc, char *argv[]){
                           ntohs(clientAddress.sin_addr.s_addr),
                           ntohs(clientAddress.sin_port));
 
+    char con_check[256];
+    memset(con_check, '\0', sizeof(con_check));
+    charsRead = recv(connectionSocket, con_check, sizeof(con_check) - 1, 0);
+    if (charsRead < 0){
+    error("CLIENT: ERROR reading from socket");
+    }
+                          
     //send a response to the client to let them know they are connected to the right server
     char* response = "DEC_SERVER";
     charsRead = send(connectionSocket, response, strlen(response), 0);
@@ -104,20 +111,17 @@ int main(int argc, char *argv[]){
     }
 
     // Initialize enc_message to be the same size as the plaintext message
-    enc_message = malloc((strlen(fileBuffer) + 1) * sizeof(char));
-    memset(enc_message, '\0', strlen(fileBuffer) + 1);
-
-      printf("key: %s\n", keyBuffer);
-      printf("file: %s\n", fileBuffer);
+    dec_message = malloc((strlen(fileBuffer) + 1) * sizeof(char));
+    memset(dec_message, '\0', strlen(fileBuffer) + 1);
 
     //iterate through the key and file, adding the value of each letter to the enc_message
-    int enc_message_index = 0;
+    int dec_message_index = 0;
     while (1){
-      if (fileBuffer[enc_message_index] == '\0'){
+      if (fileBuffer[dec_message_index] == '\0'){
         break;
       }
-      char keyChar = keyBuffer[enc_message_index];
-      char fileChar = fileBuffer[enc_message_index];
+      char keyChar = keyBuffer[dec_message_index];
+      char fileChar = fileBuffer[dec_message_index];
       int keyIndex = 0;
       int fileIndex = 0;
       for (int i = 0; i < 27; i++){
@@ -128,20 +132,23 @@ int main(int argc, char *argv[]){
           fileIndex = alpha[i];
         }
       }
-      int enc_index = (keyIndex + fileIndex) % 27;
-      enc_message[enc_message_index++] = alphabet[enc_index];
+      int dec_index = (fileIndex - keyIndex);
+      if (dec_index < 0) {
+        dec_index += 27;
+      }
+      dec_message[dec_message_index++] = alphabet[dec_index];
     }
 
-    enc_message[enc_message_index] = '\0';
+    dec_message[dec_message_index] = '\0';
     
     // Send the encoded message back to the client
     charsRead = send(connectionSocket, 
-                    enc_message, strlen(enc_message), 0); 
+                    dec_message, strlen(dec_message), 0); 
     if (charsRead < 0){
       error("ERROR writing to socket");
     }
 
-    free(enc_message);
+    free(dec_message);
 
     // Close the connection socket for this client
     close(connectionSocket); 

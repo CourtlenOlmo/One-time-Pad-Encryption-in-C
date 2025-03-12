@@ -113,9 +113,6 @@ int main(int argc, char *argv[]){
     enc_message = malloc((strlen(fileBuffer) + 1) * sizeof(char));
     memset(enc_message, '\0', strlen(fileBuffer) + 1);
 
-      printf("key: %s\n", keyBuffer);
-      printf("file: %s\n", fileBuffer);
-
     //iterate through the key and file, adding the value of each letter to the enc_message
     int enc_message_index = 0;
     while (1){
