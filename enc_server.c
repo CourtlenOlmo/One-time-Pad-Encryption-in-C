@@ -75,6 +75,13 @@ int main(int argc, char *argv[]){
                           ntohs(clientAddress.sin_addr.s_addr),
                           ntohs(clientAddress.sin_port));
 
+    //send a response to the client to let them know they are connected to the right server
+    char* response = "ENC_SERVER";
+    charsRead = send(connectionSocket, response, strlen(response), 0);
+    if (charsRead < 0){
+      error("ERROR writing to socket");
+    }
+
     // Get the message from the client and display it
     memset(mainBuffer, '\0', 80000);
     // Receive the plaintext message from the socket

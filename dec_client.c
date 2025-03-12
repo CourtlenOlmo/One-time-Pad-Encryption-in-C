@@ -87,6 +87,28 @@ int main(int argc, char *argv[]) {
     error("CLIENT: ERROR connecting");
   }
 
+  // Send a check message to the server to identify it
+  char checkMessage[] = "ENC_CLIENT_CHECK";
+  charsWritten = send(socketFD, checkMessage, strlen(checkMessage), 0);
+  if (charsWritten < 0){
+    error("CLIENT: ERROR writing to socket");
+  }
+
+  // Receive the server's response
+  char response[256];
+  memset(response, '\0', sizeof(response));
+  charsRead = recv(socketFD, response, sizeof(response) - 1, 0);
+  if (charsRead < 0){
+    error("CLIENT: ERROR reading from socket");
+  }
+
+  // Check if the server is dec_server
+  if (strcmp(response, "ENC_SERVER") == 0) {
+    fprintf(stderr, "CLIENT: ERROR connected to dec_server\n");
+    close(socketFD);
+    exit(2);
+  }
+
   // Open the key and filename files
   FILE* keyFile = fopen(key, "r");
   FILE* file = fopen(fileName, "r");
