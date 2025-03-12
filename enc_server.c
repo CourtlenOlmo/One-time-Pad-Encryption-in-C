@@ -75,6 +75,13 @@ int main(int argc, char *argv[]){
                           ntohs(clientAddress.sin_addr.s_addr),
                           ntohs(clientAddress.sin_port));
 
+    char con_check[256];
+    memset(con_check, '\0', sizeof(con_check));
+    charsRead = recv(connectionSocket, con_check, sizeof(con_check) - 1, 0);
+    if (charsRead < 0){
+    error("CLIENT: ERROR reading from socket");
+    }
+
     //send a response to the client to let them know they are connected to the right server
     char* response = "ENC_SERVER";
     charsRead = send(connectionSocket, response, strlen(response), 0);
@@ -82,14 +89,13 @@ int main(int argc, char *argv[]){
       error("ERROR writing to socket");
     }
 
-    // Get the message from the client and display it
     memset(mainBuffer, '\0', 80000);
     // Receive the plaintext message from the socket
     charsRead = recv(connectionSocket, mainBuffer, 80000, 0); 
     if (charsRead < 0){
       error("ERROR reading from socket");
     }
-    
+
     //seperate the key and file from the buffer and put them into their own buffers
     char* token = strtok(mainBuffer, "|");
     strcpy(fileBuffer, token);
