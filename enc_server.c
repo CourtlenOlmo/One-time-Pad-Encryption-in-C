@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <sys/wait.h>   // waitpid()
+#include <sys/wait.h>
 
 // Error function used for reporting issues
 void error(const char *msg) {
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]){
   }
 
   // Start listening for connections. Allow up to 5 connections to queue up
-  listen(listenSocket, 5); 
+  listen(listenSocket, 100); 
   
   // Accept a connection, blocking if one is not available until one connects
   while(1){
