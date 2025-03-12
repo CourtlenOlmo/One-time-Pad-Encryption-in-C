@@ -56,6 +56,19 @@ void comp_length( char* key, char* fileName){
       fprintf(stderr, "Error: key '%s' is too short\n", key);
       exit(1);
     }
+
+    //check if the file contains any lower case letters or invalid characters
+    fseek(file, 0, SEEK_SET);
+    char c;
+    while ((c = fgetc(file)) != EOF){
+      if (c < 65 || c > 90){
+        if (c != 32 && c != 10){
+          fprintf(stderr, "Error: '%s' contains invalid characters\n", fileName);
+          exit(1);
+        }
+      }
+    }
+
     fclose(keyFile);
     fclose(file);
 }
