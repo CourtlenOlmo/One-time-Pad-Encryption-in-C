@@ -71,6 +71,8 @@ int main(int argc, char *argv[]) {
     exit(0); 
   } 
 
+  comp_length(key, fileName);
+
   // Create a socket
   socketFD = socket(AF_INET, SOCK_STREAM, 0); 
   if (socketFD < 0){
@@ -84,8 +86,6 @@ int main(int argc, char *argv[]) {
   if (connect(socketFD, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0){
     error("CLIENT: ERROR connecting");
   }
-
-  comp_length(key, fileName);
 
   // Open the key and filename files
   FILE* keyFile = fopen(key, "r");
@@ -103,6 +103,7 @@ int main(int argc, char *argv[]) {
   //initalize buffer to be the size of the key and file
   char buffer[keySize + fileSize + 2];
   memset(buffer, '\0', sizeof(buffer));
+
   // Read the contents of the file into a temporary buffer
   char tempBuffer[fileSize + 1];
   fread(tempBuffer, sizeof(char), fileSize, file);
@@ -152,8 +153,10 @@ int main(int argc, char *argv[]) {
   }
   */
   // Get return message from server
+
   // Clear out the buffer again for reuse
   memset(buffer, '\0', sizeof(buffer));
+
   // Read data from the socket, leaving \0 at end
   charsRead = recv(socketFD, buffer, sizeof(buffer) - 1, 0); 
   if (charsRead < 0){
