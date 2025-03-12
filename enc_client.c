@@ -57,15 +57,14 @@ void comp_length( char* key, char* fileName){
       exit(1);
     }
 
+    char invalid_chars[] = "abcdefghijklmnopqrstuvwxyz!@#$%^&*()_+{}|:<>?`~";
     //check if the file contains any lower case letters or invalid characters
     fseek(file, 0, SEEK_SET);
     char c;
     while ((c = fgetc(file)) != EOF){
-      if (c < 65 || c > 90){
-        if (c != 32 && c != 10){
-          fprintf(stderr, "Error: '%s' contains invalid characters\n", fileName);
-          exit(1);
-        }
+      if (strchr(invalid_chars, c) != NULL){
+        fprintf(stderr, "Error: input contains bad characters\n");
+        exit(1);
       }
     }
 
@@ -166,7 +165,6 @@ int main(int argc, char *argv[]) {
   }
   buffer[i] = '\0';
 
-  
   // Send message to server while ensuring all data is sent
   int totalCharsWritten = 0;
   while (totalCharsWritten < strlen(buffer)){
@@ -177,17 +175,6 @@ int main(int argc, char *argv[]) {
     totalCharsWritten += charsWritten;
 
   }
-
-  /*
-  charsWritten = send(socketFD, buffer, strlen(buffer), 0); 
-  if (charsWritten < 0){
-    error("CLIENT: ERROR writing to socket");
-  }
-  if (charsWritten < strlen(buffer)){
-    printf("CLIENT: WARNING: Not all data written to socket!\n");
-  }
-  */
-  // Get return message from server
 
   // Clear out the buffer again for reuse
   memset(buffer, '\0', sizeof(buffer));
