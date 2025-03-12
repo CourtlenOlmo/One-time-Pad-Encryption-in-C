@@ -72,8 +72,30 @@ void comp_length( char* key, char* fileName){
     fclose(file);
 }
 
+// Helper function to send data
+void sendData(int socketFD, const char* buffer) {
+  int totalCharsWritten = 0;
+  int charsWritten;
+  while (totalCharsWritten < strlen(buffer)){
+    charsWritten = send(socketFD, buffer + totalCharsWritten, strlen(buffer) - totalCharsWritten, 0);
+    if (charsWritten < 0){
+      error("CLIENT: ERROR writing to socket");
+    }
+    totalCharsWritten += charsWritten;
+  }
+}
+
+// Helper function to receive data
+void receiveData(int socketFD, char* buffer, int bufferSize) {
+  memset(buffer, '\0', bufferSize);
+  int charsRead = recv(socketFD, buffer, bufferSize - 1, 0);
+  if (charsRead < 0){
+    error("CLIENT: ERROR reading from socket");
+  }
+}
+
 int main(int argc, char *argv[]) {
-  int socketFD, charsWritten, charsRead;
+  int socketFD, charsRead;
   struct sockaddr_in serverAddress;
   char* fileName = argv[1];
   char* key = argv[2];
@@ -101,18 +123,11 @@ int main(int argc, char *argv[]) {
 
   // Send a check message to the server to identify it
   char checkMessage[] = "ENC_CLIENT_CHECK";
-  charsWritten = send(socketFD, checkMessage, strlen(checkMessage), 0);
-  if (charsWritten < 0){
-    error("CLIENT: ERROR writing to socket");
-  }
+  sendData(socketFD, checkMessage);
 
   // Receive the server's response
   char response[256];
-  memset(response, '\0', sizeof(response));
-  charsRead = recv(socketFD, response, sizeof(response) - 1, 0);
-  if (charsRead < 0){
-    error("CLIENT: ERROR reading from socket");
-  }
+  receiveData(socketFD, response, sizeof(response));
 
   // Check if the server is dec_server
   if (strcmp(response, "DEC_SERVER") == 0) {
@@ -165,25 +180,15 @@ int main(int argc, char *argv[]) {
   }
   buffer[i] = '\0';
 
-  // Send message to server while ensuring all data is sent
-  int totalCharsWritten = 0;
-  while (totalCharsWritten < strlen(buffer)){
-    charsWritten = send(socketFD, buffer, strlen(buffer), 0);
-    if (charsWritten < 0){
-      error("CLIENT: ERROR writing to socket");
-    }
-    totalCharsWritten += charsWritten;
-
-  }
+  // Send message to server
+  sendData(socketFD, buffer);
 
   // Clear out the buffer again for reuse
   memset(buffer, '\0', sizeof(buffer));
 
-  // Read data from the socket, leaving \0 at end
-  charsRead = recv(socketFD, buffer, sizeof(buffer) - 1, 0); 
-  if (charsRead < 0){
-    error("CLIENT: ERROR reading from socket");
-  }
+  // Read data from the socket
+  receiveData(socketFD, buffer, sizeof(buffer));
+
   //output buffer to stdout
   printf("%s\n", buffer);
 

@@ -27,6 +27,28 @@ void setupAddressStruct(struct sockaddr_in* address,
   address->sin_addr.s_addr = INADDR_ANY;
 }
 
+// Helper function to send data
+void sendData(int socketFD, const char* buffer) {
+  int totalCharsWritten = 0;
+  int charsWritten;
+  while (totalCharsWritten < strlen(buffer)){
+    charsWritten = send(socketFD, buffer + totalCharsWritten, strlen(buffer) - totalCharsWritten, 0);
+    if (charsWritten < 0){
+      error("SERVER: ERROR writing to socket");
+    }
+    totalCharsWritten += charsWritten;
+  }
+}
+
+// Helper function to receive data
+void receiveData(int socketFD, char* buffer, int bufferSize) {
+  memset(buffer, '\0', bufferSize);
+  int charsRead = recv(socketFD, buffer, bufferSize - 1, 0);
+  if (charsRead < 0){
+    error("SERVER: ERROR reading from socket");
+  }
+}
+
 int main(int argc, char *argv[]){
   int connectionSocket, charsRead;
   char mainBuffer[80000];
@@ -58,7 +80,7 @@ int main(int argc, char *argv[]){
     error("ERROR on binding");
   }
 
-  // Start listening for connetions. Allow up to 5 connections to queue up
+  // Start listening for connections. Allow up to 5 connections to queue up
   listen(listenSocket, 5); 
   
   // Accept a connection, blocking if one is not available until one connects
@@ -76,27 +98,16 @@ int main(int argc, char *argv[]){
                           ntohs(clientAddress.sin_port));
 
     char con_check[256];
-    memset(con_check, '\0', sizeof(con_check));
-    charsRead = recv(connectionSocket, con_check, sizeof(con_check) - 1, 0);
-    if (charsRead < 0){
-    error("CLIENT: ERROR reading from socket");
-    }
+    receiveData(connectionSocket, con_check, sizeof(con_check));
 
     //send a response to the client to let them know they are connected to the right server
     char* response = "ENC_SERVER";
-    charsRead = send(connectionSocket, response, strlen(response), 0);
-    if (charsRead < 0){
-      error("ERROR writing to socket");
-    }
+    sendData(connectionSocket, response);
 
-    memset(mainBuffer, '\0', 80000);
     // Receive the plaintext message from the socket
-    charsRead = recv(connectionSocket, mainBuffer, 80000, 0); 
-    if (charsRead < 0){
-      error("ERROR reading from socket");
-    }
+    receiveData(connectionSocket, mainBuffer, sizeof(mainBuffer));
 
-    //seperate the key and file from the buffer and put them into their own buffers
+    //separate the key and file from the buffer and put them into their own buffers
     char* token = strtok(mainBuffer, "|");
     strcpy(fileBuffer, token);
     token = strtok(NULL, "|");
@@ -111,6 +122,9 @@ int main(int argc, char *argv[]){
 
     // Initialize enc_message to be the same size as the plaintext message
     enc_message = malloc((strlen(fileBuffer) + 1) * sizeof(char));
+    if (enc_message == NULL) {
+      error("ERROR allocating memory for enc_message");
+    }
     memset(enc_message, '\0', strlen(fileBuffer) + 1);
 
     //iterate through the key and file, adding the value of each letter to the enc_message
@@ -138,11 +152,7 @@ int main(int argc, char *argv[]){
     enc_message[enc_message_index] = '\0';
     
     // Send the encoded message back to the client
-    charsRead = send(connectionSocket, 
-                    enc_message, strlen(enc_message), 0); 
-    if (charsRead < 0){
-      error("ERROR writing to socket");
-    }
+    sendData(connectionSocket, enc_message);
 
     free(enc_message);
 
