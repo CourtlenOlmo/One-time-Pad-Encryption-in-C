@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/wait.h>   // waitpid()
 
 // Error function used for reporting issues
 void error(const char *msg) {
@@ -49,14 +50,82 @@ void receiveData(int socketFD, char* buffer, int bufferSize) {
   }
 }
 
-int main(int argc, char *argv[]){
-  int connectionSocket, charsRead;
+void handleConnection(int connectionSocket) {
   char mainBuffer[80000];
   char fileBuffer[80000];
   char keyBuffer[80000];
+  char* dec_message;
+
+  char con_check[256];
+  receiveData(connectionSocket, con_check, sizeof(con_check));
+
+  //send a response to the client to let them know they are connected to the right server
+  char* response = "DEC_SERVER";
+  sendData(connectionSocket, response);
+
+  // Receive the plaintext message from the socket
+  receiveData(connectionSocket, mainBuffer, sizeof(mainBuffer));
+  
+  //separate the key and file from the buffer and put them into their own buffers
+  char* token = strtok(mainBuffer, "|");
+  strcpy(fileBuffer, token);
+  token = strtok(NULL, "|");
+  strcpy(keyBuffer, token);
+
+  // Assign a numerical value to the letters of the alphabet
+  char* alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
+  int alpha[27];
+  for (int i = 0; i < 27; i++){
+    alpha[i] = i;
+  }
+
+  // Initialize dec_message to be the same size as the plaintext message
+  dec_message = malloc((strlen(fileBuffer) + 1) * sizeof(char));
+  if (dec_message == NULL) {
+    error("ERROR allocating memory for dec_message");
+  }
+  memset(dec_message, '\0', strlen(fileBuffer) + 1);
+
+  //iterate through the key and file, adding the value of each letter to the dec_message
+  int dec_message_index = 0;
+  while (1){
+    if (fileBuffer[dec_message_index] == '\0'){
+      break;
+    }
+    char keyChar = keyBuffer[dec_message_index];
+    char fileChar = fileBuffer[dec_message_index];
+    int keyIndex = 0;
+    int fileIndex = 0;
+    for (int i = 0; i < 27; i++){
+      if (keyChar == alphabet[i]){
+        keyIndex = alpha[i];
+      }
+      if (fileChar == alphabet[i]){
+        fileIndex = alpha[i];
+      }
+    }
+    int dec_index = (fileIndex - keyIndex);
+    if (dec_index < 0) {
+      dec_index += 27;
+    }
+    dec_message[dec_message_index++] = alphabet[dec_index];
+  }
+
+  dec_message[dec_message_index] = '\0';
+  
+  // Send the decoded message back to the client
+  sendData(connectionSocket, dec_message);
+
+  free(dec_message);
+
+  // Close the connection socket for this client
+  close(connectionSocket); 
+}
+
+int main(int argc, char *argv[]){
+  int connectionSocket;
   struct sockaddr_in serverAddress, clientAddress;
   socklen_t sizeOfClientInfo = sizeof(clientAddress);
-  char* dec_message;
 
   // Check usage & args
   if (argc < 2) { 
@@ -97,70 +166,19 @@ int main(int argc, char *argv[]){
                           ntohs(clientAddress.sin_addr.s_addr),
                           ntohs(clientAddress.sin_port));
 
-    char con_check[256];
-    receiveData(connectionSocket, con_check, sizeof(con_check));
-
-    //send a response to the client to let them know they are connected to the right server
-    char* response = "DEC_SERVER";
-    sendData(connectionSocket, response);
-
-    // Get the message from the client and display it
-    receiveData(connectionSocket, mainBuffer, sizeof(mainBuffer));
-    
-    //separate the key and file from the buffer and put them into their own buffers
-    char* token = strtok(mainBuffer, "|");
-    strcpy(fileBuffer, token);
-    token = strtok(NULL, "|");
-    strcpy(keyBuffer, token);
-
-    // Assign a numerical value to the letters of the alphabet
-    char* alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
-    int alpha[27];
-    for (int i = 0; i < 27; i++){
-      alpha[i] = i;
+    pid_t pid = fork();
+    if (pid < 0) {
+      error("SERVER: ERROR on fork");
+    } else if (pid == 0) {
+      // Child process
+      close(listenSocket); // Close the listening socket in the child process
+      handleConnection(connectionSocket);
+      exit(0);
+    } else {
+      // Parent process
+      close(connectionSocket); // Close the connection socket in the parent process
+      waitpid(pid, NULL, 0); // Wait for the child process to complete
     }
-
-    // Initialize dec_message to be the same size as the plaintext message
-    dec_message = malloc((strlen(fileBuffer) + 1) * sizeof(char));
-    if (dec_message == NULL) {
-      error("ERROR allocating memory for dec_message");
-    }
-    memset(dec_message, '\0', strlen(fileBuffer) + 1);
-
-    //iterate through the key and file, adding the value of each letter to the dec_message
-    int dec_message_index = 0;
-    while (1){
-      if (fileBuffer[dec_message_index] == '\0'){
-        break;
-      }
-      char keyChar = keyBuffer[dec_message_index];
-      char fileChar = fileBuffer[dec_message_index];
-      int keyIndex = 0;
-      int fileIndex = 0;
-      for (int i = 0; i < 27; i++){
-        if (keyChar == alphabet[i]){
-          keyIndex = alpha[i];
-        }
-        if (fileChar == alphabet[i]){
-          fileIndex = alpha[i];
-        }
-      }
-      int dec_index = (fileIndex - keyIndex);
-      if (dec_index < 0) {
-        dec_index += 27;
-      }
-      dec_message[dec_message_index++] = alphabet[dec_index];
-    }
-
-    dec_message[dec_message_index] = '\0';
-    
-    // Send the decoded message back to the client
-    sendData(connectionSocket, dec_message);
-
-    free(dec_message);
-
-    // Close the connection socket for this client
-    close(connectionSocket); 
   }
 
   // Close the listening socket
