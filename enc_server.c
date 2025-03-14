@@ -87,6 +87,7 @@ void handleConnection(int connectionSocket) {
   strcpy(fileBuffer, token);
   token = strtok(NULL, "|");
   strcpy(keyBuffer, token);
+  keyBuffer[strlen(keyBuffer) - 1] = '\0';
 
   // Assign a numerical value to the letters of the alphabet
   char* alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
