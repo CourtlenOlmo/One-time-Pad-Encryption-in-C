@@ -72,6 +72,10 @@ void handleConnection(int connectionSocket) {
   char keyBuffer[80000];
   char* enc_message;
 
+  memset(mainBuffer, '\0', sizeof(mainBuffer));
+  memset(fileBuffer, '\0', sizeof(fileBuffer));
+  memset(keyBuffer, '\0', sizeof(keyBuffer));
+
   char con_check[256];
   receiveData(connectionSocket, con_check, sizeof(con_check));
 
