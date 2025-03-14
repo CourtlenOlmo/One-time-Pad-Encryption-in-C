@@ -30,14 +30,17 @@ void setupAddressStruct(struct sockaddr_in* address,
 
 // Helper function to send data
 void sendData(int socketFD, const char* buffer) {
-  int totalCharsWritten = 0;
-  int charsWritten;
-  while (totalCharsWritten < strlen(buffer)){
-    charsWritten = send(socketFD, buffer + totalCharsWritten, strlen(buffer) - totalCharsWritten, 0);
-    if (charsWritten < 0){
+  int total = 0;
+  int bytesleft = strlen(buffer);
+  int n;
+
+  while (total < bytesleft){
+    n = send(socketFD, buffer + total, bytesleft, 0);
+    if (n < 0){
       error("SERVER: ERROR writing to socket");
     }
-    totalCharsWritten += charsWritten;
+    total += n;
+    bytesleft -= n;
   }
 }
 
@@ -78,7 +81,7 @@ void handleConnection(int connectionSocket) {
 
   // Receive the plaintext message from the socket
   receiveData(connectionSocket, mainBuffer, sizeof(mainBuffer));
-  
+
   //separate the key and file from the buffer and put them into their own buffers
   char* token = strtok(mainBuffer, "|");
   strcpy(fileBuffer, token);
@@ -125,7 +128,7 @@ void handleConnection(int connectionSocket) {
   }
 
   dec_message[dec_message_index] = '\0';
-  
+
   // Send the decoded message back to the client
   sendData(connectionSocket, dec_message);
 

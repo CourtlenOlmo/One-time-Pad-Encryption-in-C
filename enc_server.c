@@ -79,7 +79,6 @@ void handleConnection(int connectionSocket) {
   char* response = "ENC_SERVER";
   sendData(connectionSocket, response);
 
-
   // Receive the plaintext message from the socket
   receiveData(connectionSocket, mainBuffer, sizeof(mainBuffer));
 

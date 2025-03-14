@@ -74,14 +74,17 @@ void comp_length( char* key, char* fileName){
 
 // Helper function to send data
 void sendData(int socketFD, const char* buffer) {
-  int totalCharsWritten = 0;
-  int charsWritten;
-  while (totalCharsWritten < strlen(buffer)){
-    charsWritten = send(socketFD, buffer + totalCharsWritten, strlen(buffer) - totalCharsWritten, 0);
-    if (charsWritten < 0){
-      error("CLIENT: ERROR writing to socket");
+  int total = 0;
+  int bytesleft = strlen(buffer);
+  int n;
+
+  while (total < bytesleft){
+    n = send(socketFD, buffer + total, bytesleft, 0);
+    if (n < 0){
+      error("SERVER: ERROR writing to socket");
     }
-    totalCharsWritten += charsWritten;
+    total += n;
+    bytesleft -= n;
   }
 }
 
@@ -180,13 +183,16 @@ int main(int argc, char *argv[]) {
   }
   buffer[i] = '\0';
 
+  //add a newline character to the end of the buffer
+  strcat(buffer, "\n");
+
   // Send message to server
   sendData(socketFD, buffer);
 
   // Clear out the buffer again for reuse
   memset(buffer, '\0', sizeof(buffer));
 
-  // Read data from the socket
+  // Receive decoded data from the socket
   receiveData(socketFD, buffer, sizeof(buffer));
 
   //output buffer to stdout
