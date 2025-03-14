@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
   receiveData(socketFD, buffer, sizeof(buffer));
 
   //output buffer to stdout
-  printf("%s\n", buffer);
+  printf("%s", buffer);
 
   // Close the socket
   close(socketFD); 
