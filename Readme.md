@@ -9,11 +9,13 @@ First, generate a randomized key using keygen (Note: keys must be longer than th
 Next, get both servers running by entering:
 
 `./enc_server *port number* &`
+
 `./dec_server *port number* &`
 
 Now that the servers are running, and your key is generated, it's ready to accept a document for encryption. All text must be upper case, symbols or lower case will result in an error message.
 
 here is an example of an encryption call:
+
 `./enc_client plaintext1 mykey *port number* > ciphertext`
 
 I have included 5 examples of plaintext documents which are made to showcase the project.
