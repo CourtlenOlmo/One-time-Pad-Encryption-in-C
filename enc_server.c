@@ -80,7 +80,7 @@ void handleConnection(int connectionSocket) {
   receiveData(connectionSocket, con_check, sizeof(con_check));
 
   //send a response to the client to let them know they are connected to the right server
-  char* response = "ENC_SERVER";
+  char* response = "ENC_SERVER\n";
   sendData(connectionSocket, response);
 
   // Receive the plaintext message from the socket
@@ -130,7 +130,7 @@ void handleConnection(int connectionSocket) {
   }
 
   enc_message[enc_message_index] = '\0';
-  
+  strcat(enc_message, "\n");
   // Send the encoded message back to the client
   sendData(connectionSocket, enc_message);
 

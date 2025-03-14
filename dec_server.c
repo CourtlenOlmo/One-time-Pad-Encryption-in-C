@@ -80,7 +80,7 @@ void handleConnection(int connectionSocket) {
   receiveData(connectionSocket, con_check, sizeof(con_check));
 
   //send a response to the client to let them know they are connected to the right server
-  char* response = "DEC_SERVER";
+  char* response = "DEC_SERVER\n";
   sendData(connectionSocket, response);
 
   // Receive the plaintext message from the socket
@@ -133,6 +133,7 @@ void handleConnection(int connectionSocket) {
   }
 
   dec_message[dec_message_index] = '\0';
+  strcat(dec_message, "\n");
 
   // Send the decoded message back to the client
   sendData(connectionSocket, dec_message);
