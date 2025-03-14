@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Send a check message to the server to identify it
-  char checkMessage[] = "DEC_CLIENT_CHECK";
+  char checkMessage[] = "DEC_CLIENT_CHECK\n";
   sendData(socketFD, checkMessage);
 
   // Receive the server's response

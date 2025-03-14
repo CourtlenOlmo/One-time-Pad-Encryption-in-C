@@ -30,23 +30,39 @@ void setupAddressStruct(struct sockaddr_in* address,
 
 // Helper function to send data
 void sendData(int socketFD, const char* buffer) {
-  int totalCharsWritten = 0;
-  int charsWritten;
-  while (totalCharsWritten < strlen(buffer)){
-    charsWritten = send(socketFD, buffer + totalCharsWritten, strlen(buffer) - totalCharsWritten, 0);
-    if (charsWritten < 0){
+  int total = 0;
+  int bytesleft = strlen(buffer);
+  int n;
+
+  while (total < bytesleft){
+    n = send(socketFD, buffer + total, bytesleft, 0);
+    if (n < 0){
       error("SERVER: ERROR writing to socket");
     }
-    totalCharsWritten += charsWritten;
+    total += n;
+    bytesleft -= n;
   }
 }
 
 // Helper function to receive data
 void receiveData(int socketFD, char* buffer, int bufferSize) {
   memset(buffer, '\0', bufferSize);
-  int charsRead = recv(socketFD, buffer, bufferSize - 1, 0);
-  if (charsRead < 0){
-    error("SERVER: ERROR reading from socket");
+  int total = 0;
+  int n;
+
+  while (total < bufferSize - 1) {
+    n = recv(socketFD, buffer + total, bufferSize - 1 - total, 0);
+    if (n < 0) {
+      error("SERVER: ERROR reading from socket");
+    } else if (n == 0) {
+      break; // Connection closed
+    }
+    total += n;
+
+    // Check for newline character
+    if (strchr(buffer, '\n') != NULL) {
+      break;
+    }
   }
 }
 
@@ -62,6 +78,7 @@ void handleConnection(int connectionSocket) {
   //send a response to the client to let them know they are connected to the right server
   char* response = "ENC_SERVER";
   sendData(connectionSocket, response);
+
 
   // Receive the plaintext message from the socket
   receiveData(connectionSocket, mainBuffer, sizeof(mainBuffer));

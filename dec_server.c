@@ -44,9 +44,22 @@ void sendData(int socketFD, const char* buffer) {
 // Helper function to receive data
 void receiveData(int socketFD, char* buffer, int bufferSize) {
   memset(buffer, '\0', bufferSize);
-  int charsRead = recv(socketFD, buffer, bufferSize - 1, 0);
-  if (charsRead < 0){
-    error("SERVER: ERROR reading from socket");
+  int total = 0;
+  int n;
+
+  while (total < bufferSize - 1) {
+    n = recv(socketFD, buffer + total, bufferSize - 1 - total, 0);
+    if (n < 0) {
+      error("SERVER: ERROR reading from socket");
+    } else if (n == 0) {
+      break; // Connection closed
+    }
+    total += n;
+
+    // Check for newline character
+    if (strchr(buffer, '\n') != NULL) {
+      break;
+    }
   }
 }
 
