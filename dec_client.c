@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
   receiveData(socketFD, response, sizeof(response));
 
   // Check if the server is enc_server
-  if (strcmp(response, "ENC_SERVER") == 0) {
+  if (strcmp(response, "ENC_SERVER\n") == 0) {
     fprintf(stderr, "CLIENT: ERROR connected to enc_server\n");
     close(socketFD);
     exit(2);

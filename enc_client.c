@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
   receiveData(socketFD, response, sizeof(response));
 
   // Check if the server is dec_server
-  if (strcmp(response, "DEC_SERVER") == 0) {
+  if (strcmp(response, "DEC_SERVER\n") == 0) {
     fprintf(stderr, "CLIENT: ERROR connected to dec_server\n");
     close(socketFD);
     exit(2);
